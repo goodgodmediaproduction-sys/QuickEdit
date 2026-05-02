@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickEditGh by GoodGod Media - Free WhatsApp Status Video Splitter</title>
+    <meta name="description" content="Split long videos into 30 second clips for WhatsApp Status. Free tool by GoodGod Media, Ghana. No upload, no watermark.">
+    <meta name="author" content="GoodGod Media">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-1">QuickEdit<span class="text-green-600">Gh</span></h1>
+            <p class="text-lg text-gray-600">A free tool by GoodGod Media 🇬🇭</p>
+        </div>
+
+        <!-- Tool Card -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-2">WhatsApp Status Splitter</h2>
+            <p class="text-gray-600 mb-6">Cut long videos into 30s parts for Status. Runs on your phone. Your videos never leave your device.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">1. Select video from your phone</label>
+                    <input type="file" id="videoInput" accept="video/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">2. Choose split time</label>
+                    <select id="segmentTime" class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="30">30 seconds - WhatsApp Status</option>
+                        <option value="60">60 seconds - Instagram Reels</option>
+                        <option value="15">15 seconds - Quick clips</option>
+                    </select>
+                </div>
+
+                <button id="splitBtn" disabled class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-green-700">
+                    Split Video Now
+                </button>
+            </div>
+
+            <!-- Progress -->
+            <div id="progress" class="hidden mt-6">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium" id="progressText">Processing...</span>
+                    <span class="text-sm font-medium" id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">First time takes longer to load. Keep tab open.</p>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="hidden mt-6">
+                <h3 class="text-lg font-bold mb-4">Your QuickEditGh clips:</h3>
+                <div id="downloadLinks" class="space-y-2"></div>
+                <button id="resetBtn" class="mt-4 w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-100">
+                    Split Another Video
+                </button>
+            </div>
+        </div>
+
+        <!-- Coming Soon -->
+        <div class="bg-green-50 rounded-lg p-6">
+            <h3 class="font-bold text-lg mb-3 text-center">More QuickEditGh Tools Coming</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-white p-3 rounded-lg text-center">
+                    <p class="font-semibold">Video Resizer</p>
+                    <p class="text-gray-500 text-xs">For IG, TikTok, Status</p>
+                </div>
+                <div class="bg-white p-3 rounded-lg text-center">
+                    <p class="font-semibold">Flyer Converter</p>
+                    <p class="text-gray-500 text-xs">PDF/PNG to JPG</p>
+                </div>
+                <div class="bg-white p-3 rounded-lg text-center">
+                    <p class="font-semibold">Add Text to Video</p>
+                    <p class="text-gray-500 text-xs">No watermark</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-sm text-gray-600">
+            <p class="font-semibold text-gray-900">QuickEditGh © 2026</p>
+            <p class="mt-1">Powered by <span class="font-semibold">GoodGod Media</span> | Kumasi, Ghana</p>
+            <div class="mt-3 space-x-4">
+                <a href="tel:0534400540" class="text-green-600 hover:underline">053 440 0540</a>
+                <span class="text-gray-400">|</span>
+                <a href="mailto:Goodgodmediaproduction@gmail.com" class="text-green-600 hover:underline">Goodgodmediaproduction@gmail.com</a>
+            </div>
+            <p class="mt-3 text-xs text-gray-500">Need custom video editing or website design? Contact GoodGod Media</p>
+        </div>
+    </div>
+
+<script>
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({
+        log: false,
+        corePath: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js'
+    });
+
+    const videoInput = document.getElementById('videoInput');
+    const splitBtn = document.getElementById('splitBtn');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const results = document.getElementById('results');
+    const downloadLinks = document.getElementById('downloadLinks');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let fileLoaded = false;
+
+    videoInput.addEventListener('change', () => {
+        fileLoaded = videoInput.files.length > 0;
+        splitBtn.disabled =!fileLoaded;
+    });
+
+    resetBtn.addEventListener('click', () => {
+        results.classList.add('hidden');
+        progress.classList.add('hidden');
+        videoInput.value = '';
+        splitBtn.disabled = true;
+        fileLoaded = false;
+    });
+
+    splitBtn.addEventListener('click', async () => {
+        if (!fileLoaded) return;
+
+        const file = videoInput.files[0];
+        const segmentTime = document.getElementById('segmentTime').value;
+
+        splitBtn.disabled = true;
+        progress.classList.remove('hidden');
+        results.classList.add('hidden');
+        downloadLinks.innerHTML = '';
+
+        try {
+            progressText.textContent = 'Starting QuickEditGh...';
+            if (!ffmpeg.isLoaded()) {
+                await ffmpeg.load();
+            }
+
+            progressText.textContent = 'Reading video...';
+            ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(file));
+
+            progressText.textContent = 'Splitting clips...';
+            ffmpeg.setProgress(({ ratio }) => {
+                const percent = Math.round(ratio * 100);
+                progressBar.style.width = percent + '%';
+                progressPercent.textContent = percent + '%';
+            });
+
+            await ffmpeg.run(
+                '-i', 'input.mp4',
+                '-c', 'copy',
+                '-map', '0',
+                '-segment_time', segmentTime,
+                '-f', 'segment',
+                '-reset_timestamps', '1',
+                'output%03d.mp4'
+            );
+
+            progressText.textContent = 'Finalizing...';
+            const files = ffmpeg.FS('readdir', '/').filter(f => f.startsWith('output') && f.endsWith('.mp4'));
+
+            files.forEach((fileName, index) => {
+                const data = ffmpeg.FS('readFile', fileName);
+                const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `QuickEditGh_clip_${index + 1}.mp4`;
+                link.className = 'block w-full text-center bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700';
+                link.textContent = `Download Clip ${index + 1}`;
+                downloadLinks.appendChild(link);
+
+                ffmpeg.FS('unlink', fileName);
+            });
+
+            ffmpeg.FS('unlink', 'input.mp4');
+            results.classList.remove('hidden');
+            progress.classList.add('hidden');
+
+        } catch (err) {
+            progressText.textContent = 'Failed. Use a smaller video or refresh and try again.';
+            console.error(err);
+        } finally {
+            splitBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
